@@ -45,6 +45,7 @@ fn main() {
     }
 }
 
+/// Get the current pairing of a SixAxis controller
 fn pairing(device: HidDevice) -> Result<Box<[u8]>, Box<dyn Error>> {
     let mut buffer = [0u8; 8];
     buffer[0] = MAC_REPORT_ID;
@@ -55,6 +56,7 @@ fn pairing(device: HidDevice) -> Result<Box<[u8]>, Box<dyn Error>> {
     Ok(result.into())
 }
 
+/// Set the new pairing of a SixAxis controller
 fn set_pairing(device: HidDevice, address: &str) -> Result<(), Box<dyn Error>> {
     let mut buffer = vec![MAC_REPORT_ID, 0x0];
     let mut address = MacAddr6::from_str(address)?.as_bytes().to_vec();
