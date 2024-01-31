@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+futures-lite = "2.2.0"
 hidapi = "2.4.1"
 macaddr = "1.0.1"
