@@ -15,11 +15,15 @@ impl SixaxisApi {
     }
 
     pub fn open(&self, vendor_id: u16, product_id: u16) -> Result<SixaxisDevice, Box<dyn Error>> {
-        let device = list_devices()
+        let device = match list_devices()
             .unwrap()
             .find(|dev| dev.vendor_id() == vendor_id && dev.product_id() == product_id)
-            .expect("Unable to find SixAxis device!")
-            .open()?;
+        {
+            Some(dev) => dev,
+            None => {
+                return Err("Device not found!".into());
+            },
+        }.open()?;
 
         let interface = device.detach_and_claim_interface(0)?;
 

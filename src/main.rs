@@ -17,8 +17,8 @@ fn main() {
     // Try to get the first sixaxis controller
     let device = match api.open(VENDOR, PRODUCT) {
         Ok(device) => device,
-        Err(_) => {
-            eprintln!("No SixAxis device found!");
+        Err(err) => {
+            eprintln!("Could not connect to device: {}", err);
             exit(1);
         }
     };
