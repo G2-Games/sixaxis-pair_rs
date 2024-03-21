@@ -1,11 +1,11 @@
 [package]
 name = "sixaxis_go"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-futures-lite = "2.2.0"
-hidapi = "2.4.1"
+futures-lite = "2.3.0"
 macaddr = "1.0.1"
+nusb = "0.1.7"
