@@ -9,4 +9,6 @@ To get the current controller's paired MAC simply run the tool with no arguments
 
 Example: 
 
-`./sixaxis-pair_rs [mac]`
+To get address: `./sixaxis-pair_rs`
+
+To set address: `./sixaxis-pair_rs <mac>`
