@@ -8,4 +8,9 @@ edition = "2021"
 [dependencies]
 futures-lite = "2.3.0"
 macaddr = "1.0.1"
+
+[target.'cfg(not(windows))'.dependencies]
 nusb = "0.1.7"
+
+[target.'cfg(windows)'.dependencies]
+hidapi = { version = "2.6.1", features = ["windows-native"] }

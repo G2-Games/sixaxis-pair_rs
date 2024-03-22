@@ -1,6 +1,12 @@
-mod hidapi;
+#[cfg(not(target_os = "windows"))]
+#[path = "./interface/generic.rs"]
+mod interface;
 
-use crate::hidapi::{SixaxisApi, SixaxisDevice};
+#[cfg(target_os = "windows")]
+#[path = "./interface/windows.rs"]
+mod interface;
+
+use crate::interface::{SixaxisApi, SixaxisDevice};
 use macaddr::MacAddr6;
 use std::{env, error::Error, process::exit, str::FromStr};
 
