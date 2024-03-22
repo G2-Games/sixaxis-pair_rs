@@ -1,9 +1,10 @@
 [package]
-name = "sixaxis_go"
-version = "1.0.0"
+name = "sixaxis_rs"
+version = "1.0.1"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[profile.release]
+lto = true
 
 [dependencies]
 futures-lite = "2.3.0"
@@ -13,4 +14,4 @@ macaddr = "1.0.1"
 nusb = "0.1.7"
 
 [target.'cfg(windows)'.dependencies]
-hidapi = { version = "2.6.1", features = ["windows-native"] }
+hidapi = { version = "2.6.1", features = ["windows-native", "linux-native"] }

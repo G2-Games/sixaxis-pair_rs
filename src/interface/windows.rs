@@ -35,11 +35,8 @@ impl SixaxisDevice {
         Ok(result.into())
     }
 
-    pub fn set_feature_report(&self, report_number: u8, out_buffer: &Vec<u8>) -> Result<(), Box<dyn Error>> {
-        let mut buffer = vec![report_number, 0x0];
-        buffer.append(&mut out_buffer.clone());
-
-        self.device.send_feature_report(&buffer)?;
+    pub fn set_feature_report(&self, _report_number: u8, out_buffer: &Vec<u8>) -> Result<(), Box<dyn Error>> {
+        self.device.send_feature_report(&out_buffer)?;
 
         Ok(())
     }
