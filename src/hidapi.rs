@@ -1,11 +1,14 @@
 use std::error::Error;
 
-use futures_lite::future::block_on;
-use nusb::{Interface, list_devices, transfer::{ControlIn, ControlType, Recipient, ControlOut}};
+use nusb::{
+    Interface,
+    list_devices,
+    transfer::{ControlIn, ControlType, Recipient, ControlOut}
+};
 
 pub struct SixaxisApi;
 
-pub struct SixaxisDevice {
+pub struct HidDevice {
     interface: Interface,
 }
 
@@ -14,7 +17,7 @@ impl SixaxisApi {
         Self {}
     }
 
-    pub fn open(&self, vendor_id: u16, product_id: u16) -> Result<SixaxisDevice, Box<dyn Error>> {
+    pub fn open(&self, vendor_id: u16, product_id: u16) -> Result<HidDevice, Box<dyn Error>> {
         let device = list_devices()
             .unwrap()
             .find(|dev| dev.vendor_id() == vendor_id && dev.product_id() == product_id)
@@ -23,32 +26,32 @@ impl SixaxisApi {
 
         let interface = device.detach_and_claim_interface(0)?;
 
-        Ok(SixaxisDevice {
+        Ok(HidDevice {
             interface,
         })
     }
 }
 
-impl SixaxisDevice {
-    pub fn get_feature_report(&self, report_number: u8) -> Result<Vec<u8>, Box<dyn Error>> {
-        let result = block_on(self.interface.control_in(
+impl HidDevice {
+    /// Get a feature report from an interface
+    pub async fn get_feature_report(&self, report_number: u8, length: u16) -> Result<Vec<u8>, Box<dyn Error>> {
+        let result = self.interface.control_in(
             ControlIn {
                 control_type: ControlType::Class,
                 recipient: Recipient::Interface,
                 request: 1,
                 value: 0x300 | report_number as u16,
                 index: 0,
-                length: 8
+                length
             }
-        )).into_result()?;
-
-        let result = result[2..].to_vec();
+        ).await.into_result()?;
 
         Ok(result)
     }
 
-    pub fn set_feature_report(&self, report_number: u8, out_buffer: &Vec<u8>) -> Result<(), Box<dyn Error>> {
-        block_on(self.interface.control_out(
+    /// Set a feature report on an interface
+    pub async fn set_feature_report(&self, report_number: u8, out_buffer: &Vec<u8>) -> Result<(), Box<dyn Error>> {
+        self.interface.control_out(
             ControlOut {
                 control_type: ControlType::Class,
                 recipient: Recipient::Interface,
@@ -57,7 +60,7 @@ impl SixaxisDevice {
                 index: 0,
                 data: out_buffer,
             }
-        )).into_result()?;
+        ).await.into_result()?;
 
         Ok(())
     }
