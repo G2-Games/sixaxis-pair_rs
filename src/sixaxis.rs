@@ -51,7 +51,10 @@ impl SixaxisApi {
         let mut buffer = vec![CONNECTED_MAC_REPORT_ID, 0x0];
         buffer.extend_from_slice(address.as_bytes());
 
-        block_on(self.device.set_feature_report(CONNECTED_MAC_REPORT_ID, &buffer))?;
+        block_on(
+            self.device
+                .set_feature_report(CONNECTED_MAC_REPORT_ID, &buffer),
+        )?;
 
         Ok(())
     }

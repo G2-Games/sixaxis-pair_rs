@@ -1,13 +1,13 @@
 mod hidapi;
 mod sixaxis;
 
+use macaddr::MacAddr6;
 use owo_colors::{OwoColorize as _, Stream::Stdout};
 use sixaxis::SixaxisApi;
-use macaddr::MacAddr6;
 use std::{cell::LazyCell, env, path::PathBuf, process::exit, str::FromStr};
 
-const VERSION_STR: LazyCell<String>
-    = LazyCell::new(|| format!("SixAxis pair tool v{}", env!("CARGO_PKG_VERSION")));
+const VERSION_STR: LazyCell<String> =
+    LazyCell::new(|| format!("SixAxis pair tool v{}", env!("CARGO_PKG_VERSION")));
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,7 +23,7 @@ fn main() {
     // Open a sixaxis device
     let mut device = match SixaxisApi::open() {
         Ok(d) => d,
-        Err(e) => print_err_exit(&e.to_string())
+        Err(e) => print_err_exit(&e.to_string()),
     };
 
     if args.len() < 2 {
