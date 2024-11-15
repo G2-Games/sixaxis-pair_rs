@@ -12,6 +12,10 @@ const CONNECTED_MAC_REPORT_ID: u8 = 0xf5;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    if args.contains(&"--version".into()) | args.contains(&"-V".into()) {
+        println!("Sixaxis pair tool v{}", env!("CARGO_PKG_VERSION"));
+        exit(0)
+    }
 
     // Get HIDAPI context
     let api = SixaxisApi::new();
@@ -29,7 +33,6 @@ fn main() {
     let controller_address =
         block_on(device.get_feature_report(CONTROLLER_MAC_REPORT_ID, 17)).unwrap()[4..10].to_vec();
     println!("Controller MAC: {}", mac_to_string(&controller_address));
-    println!("----");
 
     // Get the currently paired device
     let paired_device =
@@ -41,9 +44,7 @@ fn main() {
     } else if args.len() == 2 {
         // If mac address provided, set it, then retrieve the paired device
         let mac_buffer = set_pairing(&device, args[1].as_str()).unwrap();
-        let paired_dev = &block_on(
-            device.get_feature_report(CONNECTED_MAC_REPORT_ID, 8)
-        ).unwrap()[2..];
+        let paired_dev = &block_on(device.get_feature_report(CONNECTED_MAC_REPORT_ID, 8)).unwrap()[2..];
 
         if mac_buffer.as_slice() == paired_dev {
             println!("New Device: {}", mac_to_string(paired_dev));
