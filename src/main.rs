@@ -4,15 +4,12 @@ mod sixaxis;
 use macaddr::MacAddr6;
 use owo_colors::{OwoColorize as _, Stream::Stdout};
 use sixaxis::SixaxisApi;
-use std::{cell::LazyCell, env, path::PathBuf, process::exit, str::FromStr};
-
-const VERSION_STR: LazyCell<String> =
-    LazyCell::new(|| format!("SixAxis pair tool v{}", env!("CARGO_PKG_VERSION")));
+use std::{env, path::PathBuf, process::exit, str::FromStr};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.contains(&"--version".into()) | args.contains(&"-V".into()) {
-        println!("{}", *VERSION_STR);
+        println!("{}", version_string());
         exit(0);
     }
     if args.contains(&"--help".into()) | args.contains(&"-h".into()) {
@@ -26,7 +23,7 @@ fn main() {
         Err(e) => print_err_exit(&e.to_string()),
     };
 
-    if args.len() < 2 {
+    if args.len() == 1 {
         // If no arguments were passed, display the currently paired address
         let paired_device = match device.paired_mac() {
             Ok(m) => m,
@@ -70,10 +67,14 @@ fn main() {
     }
 }
 
+fn version_string() -> String {
+    format!("SixAxis pair tool v{}", env!("CARGO_PKG_VERSION"))
+}
+
 fn print_help(bin_path: &str) {
     let path = PathBuf::from(bin_path);
     let bin_name = path.file_name().unwrap_or_default();
-    println!("{}", *VERSION_STR);
+    println!("{}", version_string());
     println!("Usage:\n\n{} <MAC>", bin_name.to_string_lossy());
 }
 
