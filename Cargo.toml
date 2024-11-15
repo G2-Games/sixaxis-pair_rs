@@ -7,11 +7,7 @@ edition = "2021"
 lto = true
 
 [dependencies]
-futures-lite = "2.3.0"
-macaddr = "1.0.1"
-
-[target.'cfg(not(windows))'.dependencies]
-nusb = "0.1.7"
-
-[target.'cfg(windows)'.dependencies]
-hidapi = { version = "2.6.1", features = ["windows-native", "linux-native"] }
+futures-lite = "2.5"
+macaddr = "1.0"
+nusb = "0.1"
+owo-colors = { version = "4.1", features = ["supports-colors"] }

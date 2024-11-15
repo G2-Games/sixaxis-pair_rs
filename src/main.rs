@@ -1,69 +1,88 @@
-#[cfg(not(target_os = "windows"))]
-#[path = "./interface/generic.rs"]
-mod interface;
+mod hidapi;
+mod sixaxis;
 
-#[cfg(target_os = "windows")]
-#[path = "./interface/windows.rs"]
-mod interface;
-
-use crate::interface::{SixaxisApi, SixaxisDevice};
+use owo_colors::{OwoColorize as _, Stream::Stdout};
+use sixaxis::SixaxisApi;
 use macaddr::MacAddr6;
-use std::{env, error::Error, process::exit, str::FromStr};
+use std::{cell::LazyCell, env, path::PathBuf, process::exit, str::FromStr};
 
-const VENDOR: u16 = 0x054c;
-const PRODUCT: u16 = 0x0268;
-const MAC_REPORT_ID: u8 = 0xf5;
+const VERSION_STR: LazyCell<String>
+    = LazyCell::new(|| format!("SixAxis pair tool v{}", env!("CARGO_PKG_VERSION")));
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    if args.contains(&"--version".into()) | args.contains(&"-V".into()) {
+        println!("{}", *VERSION_STR);
+        exit(0);
+    }
+    if args.contains(&"--help".into()) | args.contains(&"-h".into()) {
+        print_help(&args[0]);
+        exit(0);
+    }
 
-    // Get HIDAPI context
-    let api = SixaxisApi::new();
-
-    // Try to get the first sixaxis controller
-    let device = match api.open(VENDOR, PRODUCT) {
-        Ok(device) => device,
-        Err(err) => {
-            eprintln!("Could not connect to device: {}", err);
-            exit(1);
-        }
+    // Open a sixaxis device
+    let mut device = match SixaxisApi::open() {
+        Ok(d) => d,
+        Err(e) => print_err_exit(&e.to_string())
     };
 
-    if args.len() == 1 {
-        // If no arguments, display the currently paired address
-        let paired_dev = pairing(device).unwrap();
+    if args.len() < 2 {
+        // If no arguments were passed, display the currently paired address
+        let paired_device = match device.paired_mac() {
+            Ok(m) => m,
+            Err(e) => print_err_exit(&e.to_string()),
+        };
 
-        print!("Current Device: ");
-        for (i, byte) in paired_dev.iter().enumerate() {
-            print!("{:02X?}", byte);
-            if i < 5 {
-                print!(":")
-            }
-        }
-        println!();
+        let controller_address = match device.mac() {
+            Ok(m) => m,
+            Err(e) => print_err_exit(&e.to_string()),
+        };
+
+        println!("Controller MAC: {}", controller_address);
+        println!("Current Device: {}", paired_device);
     } else if args.len() == 2 {
-        // If mac address provided, set it
-        set_pairing(device, args[1].as_str()).unwrap();
-        println!("New Device: {}", args[1]);
+        // If mac address provided, set it, then retrieve the paired device
+        let replacement_addr = match MacAddr6::from_str(&args[1]) {
+            Ok(m) => m,
+            Err(e) => print_err_exit(&format!(
+                "Provided MAC address invalid: {} <- {}",
+                args[1].if_supports_color(Stdout, |t| t.bright_yellow()),
+                e
+            )),
+        };
+        device.set_paired_mac(replacement_addr).unwrap();
+        let paired_addr = device.paired_mac().unwrap();
+
+        if replacement_addr == paired_addr {
+            println!(
+                "New Device: {}",
+                paired_addr.if_supports_color(Stdout, |t| t.bright_green())
+            );
+        } else {
+            print_err_exit(&format!(
+                "Setting failed, returned MAC Address is {}, expected {}",
+                paired_addr.if_supports_color(Stdout, |t| t.bright_yellow()),
+                replacement_addr.if_supports_color(Stdout, |t| t.green()),
+            ));
+        }
     } else {
-        println!("Usage:\n\n{} [mac]", args[0]);
+        print_help(&args[0])
     }
 }
 
-/// Get the current pairing of a SixAxis controller
-fn pairing(device: SixaxisDevice) -> Result<Box<[u8]>, Box<dyn Error>> {
-    let result = device.get_feature_report(MAC_REPORT_ID)?;
-
-    Ok(result.into())
+fn print_help(bin_path: &str) {
+    let path = PathBuf::from(bin_path);
+    let bin_name = path.file_name().unwrap_or_default();
+    println!("{}", *VERSION_STR);
+    println!("Usage:\n\n{} <MAC>", bin_name.to_string_lossy());
 }
 
-/// Set the new pairing of a SixAxis controller
-fn set_pairing(device: SixaxisDevice, address: &str) -> Result<(), Box<dyn Error>> {
-    let mut buffer = vec![MAC_REPORT_ID, 0x0];
-    let mut address = MacAddr6::from_str(address)?.as_bytes().to_vec();
-    buffer.append(&mut address);
+fn print_err_exit(message: &str) -> ! {
+    eprintln!(
+        "{} {}",
+        "Error:".if_supports_color(Stdout, |t| t.red()),
+        message,
+    );
 
-    device.set_feature_report(MAC_REPORT_ID, &buffer)?;
-
-    Ok(())
+    exit(1)
 }
